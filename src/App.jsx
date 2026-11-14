@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import Render from "./RenderList.jsx"
+import Filter from "./Filter.jsx"
 function App() {
   const [TodoList, setTodo] = useState([])
   const [id, setId] = useState(1)
   const [Work, setWork] = useState("")
+  const [filter, setFilter] = useState("all")
+  //lọc
+  const newList = TodoList.filter((toDo) => {
+    if (filter === "unFinish") return !toDo.completed;
+    else if (filter === "Finish") { return toDo.completed; }
+    return true;
+  })
   function handleSubmit(event) {
     event.preventDefault();
     if (!Work.trim()) {
@@ -22,6 +30,14 @@ function App() {
     alert("Đã thêm thành công");
     setWork("")
   }
+  function handleDelete(id) {
+    const newList = TodoList.filter((Todo) => Todo.id !== id);
+    setTodo(newList)
+  }
+  function handleFinish(id) {
+    const newList = TodoList.map((Todo) => Todo.id === id ? { ...Todo, completed: !Todo.completed } : Todo);
+    setTodo(newList)
+  }
 
   return (
     <>
@@ -35,15 +51,21 @@ function App() {
             <td>STT</td>
             <td>Công việc</td>
             <td>Đã làm</td>
-
           </tr>
 
         </thead>
         <tbody>
+          <Render list={newList} RenderDelete={handleDelete} RenderFinish={handleFinish}></Render>
 
-          <Render list={TodoList} onList={setTodo} ></Render>
         </tbody>
       </table>
+      <div><button value="all" onClick={() => setFilter("all")}>Tất cả</button>
+        <button value="unFinish" onClick={() => setFilter("unFinish")}>Chưa xong</button>
+        <button value="finish" onClick={() => setFilter("Finish")}>Đã xong</button>
+      </div>
+
+
+
 
 
     </>
