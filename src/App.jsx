@@ -1,75 +1,91 @@
-import { useState } from 'react'
-import Render from "./RenderList.jsx"
-import Filter from "./Filter.jsx"
+import { useState, useEffect } from 'react'
+import Render from "./TodoList.jsx"
+import Filter from "./TodoFilter.jsx"
+import Form from "./TodoForm.jsx"
+import "./App.css"
 function App() {
-  const [TodoList, setTodo] = useState([])
-  const [id, setId] = useState(1)
-  const [Work, setWork] = useState("")
+  const [editingId, setEditingId] = useState(null)
+  const [todoList, setTodo] = useState(() => {
+    try {
+      const storeList = localStorage.getItem("tDo");
+      return storeList ? JSON.parse(storeList) : [];
+    }
+    catch (error) { console.error("Dữ liệu tải xuống bị lỗi"); return [] }
+
+  })
+  const [work, setWork] = useState("")
   const [filter, setFilter] = useState("all")
+  //lưu localStorage
+  useEffect(() => { localStorage.setItem("tDo", JSON.stringify(todoList)) }, [todoList])
   //lọc
-  const newList = TodoList.filter((toDo) => {
-    if (filter === "unFinish") return !toDo.completed;
-    else if (filter === "Finish") { return toDo.completed; }
+  const newList = todoList.filter((toDo) => {
+    if (filter === "doing") return !toDo.completed;
+    else if (filter === "done") return toDo.completed;
     return true;
   })
+
+  //Nhập thêm công việc
   function handleSubmit(event) {
     event.preventDefault();
-    if (!Work.trim()) {
+    const text = work.trim()
+    if (!text) {
       alert("Vui lòng nhập tên công việc")
+      return;
+    }
+    if (todoList.some((user) => user.work === text)) {
+      alert("Hãy thay đổi tên công việc (trùng)");
+      return;
+    }
+    if (editingId === null) {
+      const newWork = { id: Date.now(), work: text, completed: false }
+      setTodo([...todoList, newWork]);
       setWork("");
-      return;
     }
-    else if (TodoList.some((user) => user.Work === Work)) {
-      alert("Công việc bị trùng");
-      return;
+    else {
+      setTodo(prev => prev.map((Todo) => Todo.id === editingId ? { ...Todo, work: text } : Todo));
+      setEditingId(null);
+      setWork("")
     }
-
-    const newWork = { id: id, Work: Work, completed: false }
-    setTodo([...TodoList, newWork]);
-    setId(prev => prev + 1);
-    alert("Đã thêm thành công");
-    setWork("")
   }
+  //code để xử lí từ component con(RenderList)
   function handleDelete(id) {
-    const newList = TodoList.filter((Todo) => Todo.id !== id);
-    setTodo(newList)
+    if (confirm("Bạn có chắc chắn muốn xóa công việc này")) {
+      setTodo(prev => prev.filter((Todo) => Todo.id !== id));
+      if (id === editingId) {
+        handleCancel();
+      }
+    }
   }
   function handleFinish(id) {
-    const newList = TodoList.map((Todo) => Todo.id === id ? { ...Todo, completed: !Todo.completed } : Todo);
-    setTodo(newList)
+    setTodo(prev => prev.map((Todo) => Todo.id === id ? { ...Todo, completed: !Todo.completed } : Todo))
   }
-
+  //Sửa
+  function reWrite(toDo) {
+    setEditingId(toDo.id);
+    setWork(toDo.work);
+  }
+  //Hủy sửa
+  function handleCancel() {
+    setEditingId(null);
+    setWork("")
+  }
+  //Xóa tất cả
+  function deleteAll() {
+    if (confirm("Bạn có chắc chắn muốn xóa tất cả cac việc đã xong không ?")) {
+      setTodo(prev => prev.filter((Todo) => !Todo.completed));
+      if (todoList.some((toDo) => toDo.id === editingId && toDo.completed)) { handleCancel(); }
+    }
+  }
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <input type="text" value={Work} onChange={(event) => setWork(event.target.value)} placeholder="Enter..."></input>
-        <button type="submit">Thêm</button>
-      </form>
-      <table>
-        <thead>
-          <tr>
-            <td>STT</td>
-            <td>Công việc</td>
-            <td>Đã làm</td>
-          </tr>
 
-        </thead>
-        <tbody>
-          <Render list={newList} RenderDelete={handleDelete} RenderFinish={handleFinish}></Render>
-
-        </tbody>
-      </table>
-      <div><button value="all" onClick={() => setFilter("all")}>Tất cả</button>
-        <button value="unFinish" onClick={() => setFilter("unFinish")}>Chưa xong</button>
-        <button value="finish" onClick={() => setFilter("Finish")}>Đã xong</button>
-      </div>
-
-
-
-
+      <Form handleSubmit={handleSubmit} setWork={setWork} work={work} handleCancel={handleCancel} editingId={editingId} ></Form>
+      <Render list={newList} RenderDelete={handleDelete} RenderFinish={handleFinish} RenderRewrite={reWrite}></Render>
+      <Filter filter={filter} setFilter={setFilter} deleteAll={deleteAll}></Filter>
 
     </>
   )
 }
+
 
 export default App
