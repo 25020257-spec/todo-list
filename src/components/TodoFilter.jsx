@@ -1,4 +1,4 @@
-import "./App.css"
+
 function Filter({ filter, setFilter, deleteAll }) {
     return (
         <div><button value="all" onClick={() => setFilter("all")} className={` btn ${filter === "all" ? "active" : ""}`}>Tất cả</button>

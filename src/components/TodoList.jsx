@@ -20,7 +20,7 @@ function Render({ list, RenderFinish, RenderDelete, RenderRewrite }) {
                         <td><button onClick={() => RenderDelete(toDo.id)}>Xóa</button></td>
                         <td><button onClick={() => RenderRewrite(toDo)}>Sửa</button></td>
                     </tr >
-                }) : <tr><td colSpan="3">Chưa có công việc nào được thêm</td></tr>}
+                }) : <tr><td colSpan="3">Chưa có công việc nào</td></tr>}
             </tbody>
         </table >
 
